@@ -1,35 +1,40 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [employees, setEmployees] = useState([]);
+
+  // JSON file load karna
+  useEffect(() => {
+    fetch("/employees.json")
+      .then((res) => res.json())
+      .then((data) => setEmployees(data));
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div style={{ padding: "20px" }}>
+      <h1>HR Access Simulator</h1>
+      <table border="1" cellPadding="10" style={{ borderCollapse: "collapse" }}>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Access Level</th>
+            <th>Request Time</th>
+            <th>Room</th>
+          </tr>
+        </thead>
+        <tbody>
+          {employees.map((emp, index) => (
+            <tr key={index}>
+              <td>{emp.id}</td>
+              <td>{emp.access_level}</td>
+              <td>{emp.request_time}</td>
+              <td>{emp.room}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
-export default App
+export default App;
