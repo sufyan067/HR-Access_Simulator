@@ -1,48 +1,82 @@
-function toMinutes(t) {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
-}
+// rules.js
 
 function simulateAccess(employees) {
   const rooms = {
-    "ServerRoom": { minLevel: 2, open: "09:00", close: "11:00", cooldown: 15 },
-    "Vault": { minLevel: 3, open: "09:00", close: "10:00", cooldown: 30 },
-    "R&D Lab": { minLevel: 1, open: "08:00", close: "12:00", cooldown: 10 }
+    ServerRoom: { minLevel: 2, open: "09:00", close: "11:00", cooldown: 15 },
+    Vault: { minLevel: 3, open: "09:00", close: "10:00", cooldown: 30 },
+    "R&D Lab": { minLevel: 1, open: "08:00", close: "12:00", cooldown: 10 },
   };
 
-  const lastAccess = {};
+  const lastAccess = {}; // track cooldown per employee per room
   const results = [];
 
-  for (const emp of employees) {
-    const room = rooms[emp.room];
-    if (!room) {
-      results.push({ ...emp, status: "Denied", reason: "Invalid room" });
+  for (let emp of employees) {
+    const { id, access_level, request_time, room } = emp;
+    const rule = rooms[room];
+
+    // Agar room exist hi nahi karta
+    if (!rule) {
+      results.push({
+        ...emp,
+        status: "Denied",
+        reason: `Denied: Room ${room} not found`,
+      });
       continue;
     }
 
-    const req = toMinutes(emp.request_time);
-
-    if (emp.access_level < room.minLevel) {
-      results.push({ ...emp, status: "Denied", reason: "Below required level" });
+    // 1. Access level check
+    if (access_level < rule.minLevel) {
+      results.push({
+        ...emp,
+        status: "Denied",
+        reason: "Denied: Below required access level",
+      });
       continue;
     }
 
-    if (req < toMinutes(room.open) || req > toMinutes(room.close)) {
-      results.push({ ...emp, status: "Denied", reason: "Room closed" });
+    // 2. Time check
+    if (request_time < rule.open || request_time > rule.close) {
+      results.push({
+        ...emp,
+        status: "Denied",
+        reason: `Denied: Room closed at ${request_time}`,
+      });
       continue;
     }
 
-    const key = `${emp.id}-${emp.room}`;
-    if (lastAccess[key] !== undefined && (req - lastAccess[key]) < room.cooldown) {
-      results.push({ ...emp, status: "Denied", reason: `Cooldown not finished (${room.cooldown} mins)` });
-      continue;
+    // 3. Cooldown check
+    const last = lastAccess[`${id}-${room}`];
+    if (last) {
+      const diff = timeDiffMinutes(last, request_time);
+      if (diff < rule.cooldown) {
+        results.push({
+          ...emp,
+          status: "Denied",
+          reason: `Denied: Cooldown period (${rule.cooldown} min) not passed`,
+        });
+        continue;
+      }
     }
 
-    lastAccess[key] = req;
-    results.push({ ...emp, status: "Granted", reason: `Access granted to ${emp.room}` });
+    // ✅ Agar sab pass ho gaya → Access Granted
+    results.push({
+      ...emp,
+      status: "Granted",
+      reason: `Access granted to ${room}`,
+    });
+
+    // update last access time
+    lastAccess[`${id}-${room}`] = request_time;
   }
 
   return results;
+}
+
+// Helper → calculate minutes difference
+function timeDiffMinutes(t1, t2) {
+  const [h1, m1] = t1.split(":").map(Number);
+  const [h2, m2] = t2.split(":").map(Number);
+  return (h2 * 60 + m2) - (h1 * 60 + m1);
 }
 
 module.exports = { simulateAccess };
