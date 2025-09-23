@@ -6,9 +6,10 @@ function App() {
 
   const handleSimulate = async () => {
     try {
+      // Backend se data fetch karo
       const res = await axios.get("http://localhost:5000/simulate");
-      console.log("Simulation results:", res.data);
-      setResults(res.data);
+      console.log("Simulation results:", res.data); // Debug ke liye
+      setResults(res.data); // state update karo
     } catch (err) {
       console.error("Error calling backend:", err);
     }
@@ -40,6 +41,7 @@ function App() {
               <th>ID</th>
               <th>Room</th>
               <th>Status</th>
+              <th>Reason</th> {/* Added Reason column */}
             </tr>
           </thead>
           <tbody>
@@ -48,6 +50,7 @@ function App() {
                 <td>{r.id}</td>
                 <td>{r.room}</td>
                 <td>{r.status}</td>
+                <td>{r.reason}</td> {/* Render reason */}
               </tr>
             ))}
           </tbody>
